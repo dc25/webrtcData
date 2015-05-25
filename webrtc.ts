@@ -207,7 +207,7 @@ sharedKey = prompt("Please enter a shared identifier");
 
 // Configure, connect, and set up Firebase
 // You probably want to replace the text below with your own Firebase URL
-var firebaseUrl = 'https://amber-fire-244.firebaseio.com/';
+var firebaseUrl = 'https://pr100.firebaseio.com/';
 var database = new Firebase(firebaseUrl);
 var announceChannel = database.child('announce');
 var signalChannel = database.child('messages').child(id);
