@@ -64,7 +64,10 @@ var handleOfferSignal = function(message) {
   peerConnection.createAnswer(function(sessionDescription) {
     console.log('Sending answer to ' + message.sender);
     peerConnection.setLocalDescription(sessionDescription);
-    sendSignalChannelMessage(sessionDescription);
+    sendSignalChannelMessage({ 
+        type: sessionDescription.type,
+        sdp: sessionDescription.sdp 
+    });
   });
 };
 
@@ -119,7 +122,10 @@ var handleICECandidate = function(event) {
   if (candidate) {
     candidate.type = 'candidate';
     console.log('Sending candidate to ' + remote);
-    sendSignalChannelMessage(candidate);
+    sendSignalChannelMessage({ 
+        type: candidate.type,
+        candidate: candidate.candidate,
+        sdpMLineIndex: candidate.sdpMLineIndex });
   } else {
     console.log('All candidates sent');
   }
@@ -165,7 +171,10 @@ var connect = function() {
   peerConnection.createOffer(function(sessionDescription) {
     console.log('Sending offer to ' + remote);
     peerConnection.setLocalDescription(sessionDescription);
-    sendSignalChannelMessage(sessionDescription);
+    sendSignalChannelMessage({ 
+        type: sessionDescription.type,
+        sdp: sessionDescription.sdp 
+    });
   });
 };
 
