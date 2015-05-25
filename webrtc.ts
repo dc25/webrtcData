@@ -1,3 +1,5 @@
+/// <reference path="DefinitelyTyped/firebase/firebase.d.ts" />
+/// <reference path="DefinitelyTyped/webrtc/RTCPeerConnection.d.ts" />
 
 /* WebRTC Demo
  * Allows two clients to connect via WebRTC with Data Channels
