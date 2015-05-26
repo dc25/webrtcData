@@ -1,6 +1,8 @@
 /// <reference path="DefinitelyTyped/firebase/firebase.d.ts" />
 /// <reference path="DefinitelyTyped/webrtc/RTCPeerConnection.d.ts" />
 
+var webrtcDetectedBrowser;
+
 /* WebRTC Demo
  * Allows two clients to connect via WebRTC with Data Channels
  * Uses Firebase as a signalling server
@@ -54,6 +56,10 @@ var sendSignalChannelMessage = function(message) {
   database.child('messages').child(remote).push(message);
 };
 
+function handleCreateAnswerError(error) {
+  console.log('createAnswer() error: ', error);
+}
+
 // Handle a WebRTC offer request from a remote client
 var handleOfferSignal = function(message) {
   running = true;
@@ -68,8 +74,9 @@ var handleOfferSignal = function(message) {
         type: sessionDescription.type,
         sdp: sessionDescription.sdp 
     });
-  });
+  }, handleCreateAnswerError);
 };
+
 
 // Handle a WebRTC answer response to our offer we gave the remote client
 var handleAnswerSignal = function(message) {
@@ -180,7 +187,7 @@ var connect = function() {
 
 // Function to initiate the WebRTC peerconnection and dataChannel
 var initiateWebRTCState = function() {
-  peerConnection = new webkitRTCPeerConnection(servers);
+  peerConnection = new RTCPeerConnection(servers);
   peerConnection.ondatachannel = handleDataChannel;
   dataChannel = peerConnection.createDataChannel('myDataChannel');
   dataChannel.onmessage = handleDataChannelMessage;
@@ -198,7 +205,7 @@ var running = false; // Keep track of our connection state
 // STUN is a component of the actual WebRTC connection
 var servers = {
   iceServers: [ {
-    url : 'stun:stun.l.google.com:19302'
+    url : ( webrtcDetectedBrowser == 'chrome' ? 'stun:stun.l.google.com:19302' : 'stun:23.21.150.121')
   } ]
 };
 
