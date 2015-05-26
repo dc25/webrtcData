@@ -142,7 +142,7 @@ var handleDataChannel = function (event) {
 // You probably want to overwrite this to do something more useful!
 var handleDataChannelMessage = function (event) {
     console.log('Recieved Message: ' + event.data);
-    document.write(event.data);
+    document.getElementById("message").innerHTML = event.data;
 };
 // This is called when the WebRTC sending data channel is offically 'open'
 var handleDataChannelOpen = function () {
@@ -153,6 +153,9 @@ var handleDataChannelOpen = function () {
 var handleDataChannelClosed = function () {
     console.log('The data channel has been closed!');
 };
+function handleCreateOfferError(error) {
+    console.log('createOffer() error: ', error);
+}
 // Function to offer to start a WebRTC connection with a peer
 var connect = function () {
     running = true;
@@ -164,7 +167,7 @@ var connect = function () {
             type: sessionDescription.type,
             sdp: sessionDescription.sdp
         });
-    });
+    }, handleCreateOfferError);
 };
 // Function to initiate the WebRTC peerconnection and dataChannel
 var initiateWebRTCState = function () {
