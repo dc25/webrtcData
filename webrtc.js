@@ -30,9 +30,11 @@ var handleAnnounceChannelMessage = function (snapshot) {
     var message = snapshot.val();
     if (message.id != id && message.sharedKey == sharedKey) {
         console.log('Discovered matching announcement from ' + message.id);
+        running = true;
         remote = message.id;
         initiateWebRTCState();
-        connect();
+        startSendingCandidates();
+        peerConnection.createOffer(gotOffer, handleCreateOfferError);
     }
 };
 /* == Signal Channel Functions ==
@@ -51,6 +53,13 @@ var sendSignalChannelMessage = function (message) {
 function handleCreateAnswerError(error) {
     console.log('createAnswer() error: ', error);
 }
+function gotAnswer(sessionDescription) {
+    peerConnection.setLocalDescription(sessionDescription);
+    sendSignalChannelMessage({
+        type: sessionDescription.type,
+        sdp: sessionDescription.sdp
+    });
+}
 // Handle a WebRTC offer request from a remote client
 var handleOfferSignal = function (message) {
     running = true;
@@ -58,14 +67,7 @@ var handleOfferSignal = function (message) {
     initiateWebRTCState();
     startSendingCandidates();
     peerConnection.setRemoteDescription(new RTCSessionDescription(message));
-    peerConnection.createAnswer(function (sessionDescription) {
-        console.log('Sending answer to ' + message.sender);
-        peerConnection.setLocalDescription(sessionDescription);
-        sendSignalChannelMessage({
-            type: sessionDescription.type,
-            sdp: sessionDescription.sdp
-        });
-    }, handleCreateAnswerError);
+    peerConnection.createAnswer(gotAnswer, handleCreateAnswerError);
 };
 // Handle a WebRTC answer response to our offer we gave the remote client
 var handleAnswerSignal = function (message) {
@@ -156,19 +158,13 @@ var handleDataChannelClosed = function () {
 function handleCreateOfferError(error) {
     console.log('createOffer() error: ', error);
 }
-// Function to offer to start a WebRTC connection with a peer
-var connect = function () {
-    running = true;
-    startSendingCandidates();
-    peerConnection.createOffer(function (sessionDescription) {
-        console.log('Sending offer to ' + remote);
-        peerConnection.setLocalDescription(sessionDescription);
-        sendSignalChannelMessage({
-            type: sessionDescription.type,
-            sdp: sessionDescription.sdp
-        });
-    }, handleCreateOfferError);
-};
+function gotOffer(sessionDescription) {
+    peerConnection.setLocalDescription(sessionDescription);
+    sendSignalChannelMessage({
+        type: sessionDescription.type,
+        sdp: sessionDescription.sdp
+    });
+}
 // Function to initiate the WebRTC peerconnection and dataChannel
 var initiateWebRTCState = function () {
     peerConnection = new RTCPeerConnection(servers);
