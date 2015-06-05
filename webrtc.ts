@@ -39,7 +39,7 @@ var handleAnnounceChannelMessage = function(snapshot) {
     remote = message.id;
     initiateWebRTCState();
     startSendingCandidates();
-    peerConnection.createOffer(gotOffer , handleCreateOfferError);
+    peerConnection.createOffer(handleCreateOfferSuccess , handleCreateOfferError);
   }
 };
 
@@ -62,7 +62,7 @@ function handleCreateAnswerError(error) {
   console.log('createAnswer() error: ', error);
 }
 
-function gotAnswer(sessionDescription) {
+function handleCreateAnswerSuccess(sessionDescription) {
     peerConnection.setLocalDescription(sessionDescription);
     sendSignalChannelMessage({ 
         type: sessionDescription.type,
@@ -77,7 +77,7 @@ var handleOfferSignal = function(message) {
   initiateWebRTCState();
   startSendingCandidates();
   peerConnection.setRemoteDescription(new RTCSessionDescription(message));
-  peerConnection.createAnswer(gotAnswer, handleCreateAnswerError);
+  peerConnection.createAnswer(handleCreateAnswerSuccess, handleCreateAnswerError);
 };
 
 
@@ -178,7 +178,7 @@ function handleCreateOfferError(error) {
   console.log('createOffer() error: ', error);
 }
 
-function gotOffer(sessionDescription) {
+function handleCreateOfferSuccess(sessionDescription) {
     peerConnection.setLocalDescription(sessionDescription);
     sendSignalChannelMessage({ 
         type: sessionDescription.type,
