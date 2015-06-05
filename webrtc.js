@@ -30,7 +30,6 @@ var handleAnnounceChannelMessage = function (snapshot) {
     var message = snapshot.val();
     if (message.id != id && message.sharedKey == sharedKey) {
         console.log('Discovered matching announcement from ' + message.id);
-        running = true;
         remote = message.id;
         initiateWebRTCState();
         startSendingCandidates();
@@ -62,7 +61,6 @@ function handleCreateAnswerSuccess(sessionDescription) {
 }
 // Handle a WebRTC offer request from a remote client
 var handleOfferSignal = function (message) {
-    running = true;
     remote = message.sender;
     initiateWebRTCState();
     startSendingCandidates();
@@ -75,8 +73,10 @@ var handleAnswerSignal = function (message) {
 };
 // Handle an ICE candidate notification from the remote client
 var handleCandidateSignal = function (message) {
-    var candidate = new RTCIceCandidate(message);
-    peerConnection.addIceCandidate(candidate);
+    if (typeof peerConnection !== 'undefined') {
+        var candidate = new RTCIceCandidate(message);
+        peerConnection.addIceCandidate(candidate);
+    }
 };
 // This is the general handler for a message from our remote client
 // Determine what type of message it is, and call the appropriate handler
@@ -89,7 +89,7 @@ var handleSignalChannelMessage = function (snapshot) {
         handleOfferSignal(message);
     else if (type == 'answer')
         handleAnswerSignal(message);
-    else if (type == 'candidate' && running)
+    else if (type == 'candidate')
         handleCandidateSignal(message);
 };
 /* == ICE Candidate Functions ==
@@ -178,7 +178,6 @@ var sharedKey; // Unique identifier for two clients to find each other
 var remote; // ID of the remote peer -- set once they send an offer
 var peerConnection; // This is our WebRTC connection
 var dataChannel; // This is our outgoing data channel within WebRTC
-var running = false; // Keep track of our connection state
 // Use Google's public servers for STUN
 // STUN is a component of the actual WebRTC connection
 var servers = {
