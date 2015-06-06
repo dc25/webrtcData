@@ -33,7 +33,7 @@ var handleAnnounceChannelMessage = function (snapshot) {
         remote = message.id;
         initiateWebRTCState();
         startSendingCandidates();
-        peerConnection.createOffer(handleCreateOfferSuccess, handleCreateOfferError);
+        peerConnection.createOffer(handleCreateSDPSuccess, handleCreateSDPError);
     }
 };
 /* == Signal Channel Functions ==
@@ -49,20 +49,10 @@ var sendSignalChannelMessage = function (message) {
     message.sender = id;
     database.child('messages').child(remote).push(message);
 };
-function handleCreateOfferError(error) {
-    console.log('createOffer() error: ', error);
+function handleCreateSDPError(error) {
+    console.log('handleCreateSDPError() error: ', error);
 }
-function handleCreateAnswerError(error) {
-    console.log('createAnswer() error: ', error);
-}
-function handleCreateOfferSuccess(sessionDescription) {
-    peerConnection.setLocalDescription(sessionDescription);
-    sendSignalChannelMessage({
-        type: sessionDescription.type,
-        sdp: sessionDescription.sdp
-    });
-}
-function handleCreateAnswerSuccess(sessionDescription) {
+function handleCreateSDPSuccess(sessionDescription) {
     peerConnection.setLocalDescription(sessionDescription);
     sendSignalChannelMessage({
         type: sessionDescription.type,
@@ -75,7 +65,7 @@ var handleOfferSignal = function (message) {
     initiateWebRTCState();
     startSendingCandidates();
     peerConnection.setRemoteDescription(new RTCSessionDescription(message));
-    peerConnection.createAnswer(handleCreateAnswerSuccess, handleCreateAnswerError);
+    peerConnection.createAnswer(handleCreateSDPSuccess, handleCreateSDPError);
 };
 // Handle a WebRTC answer response to our offer we gave the remote client
 var handleAnswerSignal = function (message) {
