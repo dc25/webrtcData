@@ -7,6 +7,32 @@
  * http://fosterelli.co/getting-started-with-webrtc-data-channels.html 
  */
 
+var id;              // Our unique ID
+var sharedKey;       // Unique identifier for two clients to find each other
+var remote;          // ID of the remote peer -- set once they send an offer
+var peerConnection;  // This is our WebRTC connection
+var dataChannel;     // This is our outgoing data channel within WebRTC
+
+// Use well known public servers for STUN/TURN
+// STUN is a component of the actual WebRTC connection
+var servers = {
+  iceServers: [ {url: "stun:23.21.150.121"}, {url: "stun:stun.l.google.com:19302"} ]
+};
+
+// Function to initiate the WebRTC peerconnection and dataChannel
+var initiateWebRTCState = function() {
+  peerConnection = new RTCPeerConnection(servers);
+  peerConnection.ondatachannel = handleDataChannel;
+
+  dataChannel = peerConnection.createDataChannel('myDataChannel');
+  dataChannel.onopen = handleDataChannelOpen;
+
+  // start sending ICE candidates to peer.
+  peerConnection.onicecandidate = handleICECandidate;
+  peerConnection.oniceconnectionstatechange = handleICEConnectionStateChange;
+
+};
+
 /* == Announcement Channel Functions ==
  * The 'announcement channel' allows clients to find each other on Firebase
  * These functions are for communicating through the announcement channel
@@ -20,10 +46,8 @@
 var sendAnnounceChannelMessage = function() {
   announceChannel.remove(function() {
     announceChannel.push({
-      sharedKey : sharedKey,
       id : id
     });
-    console.log('Announced our sharedKey is ' + sharedKey);
     console.log('Announced our ID is ' + id);
   });
 };
@@ -31,10 +55,9 @@ var sendAnnounceChannelMessage = function() {
 // Handle an incoming message on the announcement channel
 var handleAnnounceChannelMessage = function(snapshot) {
   var message = snapshot.val();
-  if (message.id != id && message.sharedKey == sharedKey) {
+  if (message.id != id) {
     console.log('Discovered matching announcement from ' + message.id);
     remote = message.id;
-    initiateWebRTCState();
     peerConnection.createOffer(handleCreateSDPSuccess , handleCreateSDPError);
   }
 };
@@ -69,7 +92,6 @@ function handleCreateSDPSuccess(sessionDescription) {
 // Handle a WebRTC offer request from a remote client
 var handleOfferSignal = function(message) {
   remote = message.sender;
-  initiateWebRTCState();
   peerConnection.setRemoteDescription(new RTCSessionDescription(message));
   peerConnection.createAnswer(handleCreateSDPSuccess, handleCreateSDPError);
 };
@@ -161,32 +183,6 @@ var handleDataChannelOpen = function() {
   dataChannel.send('Hello! I am ' + id);
 };
 
-// Function to initiate the WebRTC peerconnection and dataChannel
-var initiateWebRTCState = function() {
-  peerConnection = new RTCPeerConnection(servers);
-  peerConnection.ondatachannel = handleDataChannel;
-
-  dataChannel = peerConnection.createDataChannel('myDataChannel');
-  dataChannel.onopen = handleDataChannelOpen;
-
-  // start sending ICE candidates to peer.
-  peerConnection.onicecandidate = handleICECandidate;
-  peerConnection.oniceconnectionstatechange = handleICEConnectionStateChange;
-
-};
-
-var id;              // Our unique ID
-var sharedKey;       // Unique identifier for two clients to find each other
-var remote;          // ID of the remote peer -- set once they send an offer
-var peerConnection;  // This is our WebRTC connection
-var dataChannel;     // This is our outgoing data channel within WebRTC
-
-// Use well known public servers for STUN/TURN
-// STUN is a component of the actual WebRTC connection
-var servers = {
-  iceServers: [ {url: "stun:23.21.150.121"}, {url: "stun:stun.l.google.com:19302"} ]
-};
-
 // Generate this browser a unique ID
 // On Firebase peers use this unique ID to address messages to each other
 // after they have found each other in the announcement channel
@@ -203,10 +199,12 @@ sharedKey = prompt("Please enter a shared identifier");
 // You probably want to replace the text below with your own Firebase URL
 var firebaseUrl = 'https://pr100.firebaseio.com/';
 var database = new Firebase(firebaseUrl);
-var announceChannel = database.child('announce');
+var announceChannel = database.child(sharedKey);
 var signalChannel = database.child('messages').child(id);
 signalChannel.on('child_added', handleSignalChannelMessage);
 announceChannel.on('child_added', handleAnnounceChannelMessage);
+
+initiateWebRTCState();
 
 // Send a message to the announcement channel
 // If our partner is already waiting, they will send us a WebRTC offer
