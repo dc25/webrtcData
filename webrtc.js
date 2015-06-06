@@ -49,8 +49,18 @@ var sendSignalChannelMessage = function (message) {
     message.sender = id;
     database.child('messages').child(remote).push(message);
 };
+function handleCreateOfferError(error) {
+    console.log('createOffer() error: ', error);
+}
 function handleCreateAnswerError(error) {
     console.log('createAnswer() error: ', error);
+}
+function handleCreateOfferSuccess(sessionDescription) {
+    peerConnection.setLocalDescription(sessionDescription);
+    sendSignalChannelMessage({
+        type: sessionDescription.type,
+        sdp: sessionDescription.sdp
+    });
 }
 function handleCreateAnswerSuccess(sessionDescription) {
     peerConnection.setLocalDescription(sessionDescription);
@@ -151,20 +161,6 @@ var handleDataChannelOpen = function () {
     console.log('Data channel created!');
     dataChannel.send('Hello! I am ' + id);
 };
-// Called when the data channel has closed
-var handleDataChannelClosed = function () {
-    console.log('The data channel has been closed!');
-};
-function handleCreateOfferError(error) {
-    console.log('createOffer() error: ', error);
-}
-function handleCreateOfferSuccess(sessionDescription) {
-    peerConnection.setLocalDescription(sessionDescription);
-    sendSignalChannelMessage({
-        type: sessionDescription.type,
-        sdp: sessionDescription.sdp
-    });
-}
 // Function to initiate the WebRTC peerconnection and dataChannel
 var initiateWebRTCState = function () {
     peerConnection = new RTCPeerConnection(servers);
