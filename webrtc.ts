@@ -1,8 +1,6 @@
 /// <reference path="DefinitelyTyped/firebase/firebase.d.ts" />
 /// <reference path="DefinitelyTyped/webrtc/RTCPeerConnection.d.ts" />
 
-var webrtcDetectedBrowser;
-
 /* WebRTC Demo
  * Allows two clients to connect via WebRTC with Data Channels
  * Uses Firebase as a signalling server
@@ -37,7 +35,6 @@ var handleAnnounceChannelMessage = function(snapshot) {
     console.log('Discovered matching announcement from ' + message.id);
     remote = message.id;
     initiateWebRTCState();
-    startSendingCandidates();
     peerConnection.createOffer(handleCreateSDPSuccess , handleCreateSDPError);
   }
 };
@@ -73,7 +70,6 @@ function handleCreateSDPSuccess(sessionDescription) {
 var handleOfferSignal = function(message) {
   remote = message.sender;
   initiateWebRTCState();
-  startSendingCandidates();
   peerConnection.setRemoteDescription(new RTCSessionDescription(message));
   peerConnection.createAnswer(handleCreateSDPSuccess, handleCreateSDPError);
 };
@@ -89,6 +85,8 @@ var handleCandidateSignal = function(message) {
   if (typeof peerConnection !== 'undefined') {
       var candidate = new RTCIceCandidate(message);
       peerConnection.addIceCandidate(candidate);
+  } else {
+    console.log('UNDEFINED PEER CONNECTION');
   }
 };
 
@@ -109,12 +107,6 @@ var handleSignalChannelMessage = function(snapshot) {
  * Both peers must find a list of suitable candidates and exchange their list
  * We exchange this list over the signalling channel (Firebase)
  */
-
-// Add listener functions to ICE Candidate events
-var startSendingCandidates = function() {
-  peerConnection.oniceconnectionstatechange = handleICEConnectionStateChange;
-  peerConnection.onicecandidate = handleICECandidate;
-};
 
 // This is how we determine when the WebRTC connection has ended
 // This is most likely because the other peer left the page
@@ -173,8 +165,14 @@ var handleDataChannelOpen = function() {
 var initiateWebRTCState = function() {
   peerConnection = new RTCPeerConnection(servers);
   peerConnection.ondatachannel = handleDataChannel;
+
   dataChannel = peerConnection.createDataChannel('myDataChannel');
   dataChannel.onopen = handleDataChannelOpen;
+
+  // start sending ICE candidates to peer.
+  peerConnection.onicecandidate = handleICECandidate;
+  peerConnection.oniceconnectionstatechange = handleICEConnectionStateChange;
+
 };
 
 var id;              // Our unique ID
@@ -183,12 +181,10 @@ var remote;          // ID of the remote peer -- set once they send an offer
 var peerConnection;  // This is our WebRTC connection
 var dataChannel;     // This is our outgoing data channel within WebRTC
 
-// Use Google's public servers for STUN
+// Use well known public servers for STUN/TURN
 // STUN is a component of the actual WebRTC connection
 var servers = {
-  iceServers: [ {
-    url : ( webrtcDetectedBrowser == 'chrome' ? 'stun:stun.l.google.com:19302' : 'stun:23.21.150.121')
-  } ]
+  iceServers: [ {url: "stun:23.21.150.121"}, {url: "stun:stun.l.google.com:19302"} ]
 };
 
 // Generate this browser a unique ID
