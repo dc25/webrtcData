@@ -170,7 +170,6 @@ var initiateWebRTCState = function () {
     peerConnection = new RTCPeerConnection(servers);
     peerConnection.ondatachannel = handleDataChannel;
     dataChannel = peerConnection.createDataChannel('myDataChannel');
-    dataChannel.onmessage = handleDataChannelMessage;
     dataChannel.onopen = handleDataChannelOpen;
 };
 var id; // Our unique ID
