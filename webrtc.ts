@@ -27,7 +27,7 @@ var initiateWebRTCState = function() {
   dataChannel = peerConnection.createDataChannel('myDataChannel');
   dataChannel.onopen = handleDataChannelOpen;
 
-  // start sending ICE candidates to peer.
+  // Enable sending of ICE candidates to peer.
   peerConnection.onicecandidate = handleICECandidate;
   peerConnection.oniceconnectionstatechange = handleICEConnectionStateChange;
 
