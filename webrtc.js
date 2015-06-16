@@ -5,8 +5,16 @@
  * Uses Firebase as a signalling server
  * http://fosterelli.co/getting-started-with-webrtc-data-channels.html
  */
-var id; // Our unique ID
-var sharedKey; // Unique identifier for two clients to find each other
+// Generate this browser a unique ID
+// On Firebase peers use this unique ID to address messages to each other
+// after they have found each other in the announcement channel
+var id = Math.random().toString().replace('.', '');
+// Unique identifier for two clients to use
+// They MUST share this to find each other
+// Each peer waits in the announcement channel to find its matching identifier
+// When it finds its matching identifier, it initiates a WebRTC offer with
+// that client. This unique identifier can be pretty much anything in practice.
+var sharedKey = prompt("Please enter a shared identifier");
 var remote; // ID of the remote peer -- set once they send an offer
 var peerConnection; // This is our WebRTC connection
 var dataChannel; // This is our outgoing data channel within WebRTC
@@ -164,16 +172,6 @@ var handleDataChannelOpen = function () {
     console.log('Data channel created!');
     dataChannel.send('Hello! I am ' + id);
 };
-// Generate this browser a unique ID
-// On Firebase peers use this unique ID to address messages to each other
-// after they have found each other in the announcement channel
-id = Math.random().toString().replace('.', '');
-// Unique identifier for two clients to use
-// They MUST share this to find each other
-// Each peer waits in the announcement channel to find its matching identifier
-// When it finds its matching identifier, it initiates a WebRTC offer with
-// that client. This unique identifier can be pretty much anything in practice.
-sharedKey = prompt("Please enter a shared identifier");
 // Configure, connect, and set up Firebase
 // You probably want to replace the text below with your own Firebase URL
 var firebaseUrl = 'https://pr100.firebaseio.com/';
