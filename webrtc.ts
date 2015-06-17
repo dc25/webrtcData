@@ -19,9 +19,7 @@ var id:string = Math.random().toString().replace('.', '');
 // that client. This unique identifier can be pretty much anything in practice.
 var sharedKey:string = prompt("Please enter a shared identifier");
 
-var remote;          // ID of the remote peer -- set once they send an offer
-var peerConnection;  // This is our WebRTC connection
-var dataChannel;     // This is our outgoing data channel within WebRTC
+var remoteId:string; // ID of the remote peer -- set once they send an offer
 
 /* == Announcement Channel Functions ==
  * The 'announcement channel' allows clients to find each other on Firebase
@@ -47,7 +45,7 @@ var handleAnnounceChannelMessage = function(snapshot) {
   var message = snapshot.val();
   if (message.id != id) {
     console.log('Discovered matching announcement from ' + message.id);
-    remote = message.id;
+    remoteId = message.id;
     if (existingAnnouncementsLoaded) 
     {
       // this announcement arrived after page loaded
@@ -73,7 +71,7 @@ var handleAnnounceChannelValue = function(snapshot) {
 
 // Send a message to the remote client via Firebase
 var sendSignalChannelMessage = function(message) {
-  database.child('messages').child(remote).push(message);
+  database.child('messages').child(remoteId).push(message);
 };
 
 function handleCreateSDPError(error) {
@@ -85,23 +83,6 @@ function handleCreateSDPSuccess(sessionDescription) {
     sendSignalChannelMessage(JSON.stringify({'sdp': sessionDescription}));
 }
 
-// Handle a WebRTC offer request from a remote client
-var handleOfferSignal = function(message) {
-  peerConnection.setRemoteDescription(new RTCSessionDescription(message));
-  peerConnection.createAnswer(handleCreateSDPSuccess, handleCreateSDPError);
-};
-
-
-// Handle a WebRTC answer response to our offer we gave the remote client
-var handleAnswerSignal = function(message) {
-  peerConnection.setRemoteDescription(new RTCSessionDescription(message));
-};
-
-// Handle an ICE candidate notification from the remote client
-var handleCandidateSignal = function(message) {
-  peerConnection.addIceCandidate(new RTCIceCandidate(message));
-};
-
 // This is the general handler for a message from our remote client
 // Determine what type of message it is, and call the appropriate handler
 var handleSignalChannelMessage = function(snapshot) {
@@ -109,14 +90,14 @@ var handleSignalChannelMessage = function(snapshot) {
 
   var signal = JSON.parse(message);
   if(signal.sdp) {
-    if (signal.sdp.type == 'offer') 
-      handleOfferSignal(signal.sdp);
-    else if (signal.sdp.type == 'answer') 
-      handleAnswerSignal(signal.sdp);
+    peerConnection.setRemoteDescription(new RTCSessionDescription(signal.sdp));
+    if (signal.sdp.type == 'offer') {
+      peerConnection.createAnswer(handleCreateSDPSuccess, handleCreateSDPError);
+    }
     else 
         console.log('Recieved a sdp signal that is neither offer nor answer');
   } else if(signal.ice) {
-    handleCandidateSignal(signal.ice);
+    peerConnection.addIceCandidate(new RTCIceCandidate(signal.ice));
   } else 
     console.log('Recieved a signal that is neither sdp nor ice');
 };
@@ -141,7 +122,7 @@ var handleICEConnectionStateChange = function() {
 var handleICECandidate = function(event) {
   var candidate = event.candidate;
   if (candidate) {
-    console.log('Sending candidate to ' + remote);
+    console.log('Sending candidate to ' + remoteId);
     sendSignalChannelMessage(JSON.stringify({'ice': candidate}));
   } else {
     console.log('All candidates sent');
@@ -176,7 +157,6 @@ var handleDataChannelOpen = function() {
   dataChannel.send('Hello! I am ' + id);
 };
 
-
 // Configure, connect, and set up Firebase
 // You probably want to replace the text below with your own Firebase URL
 var firebaseUrl:string = 'https://pr100.firebaseio.com/';
@@ -195,10 +175,11 @@ var servers = {
 iceServers: [ {url: "stun:23.21.150.121"}, {url: "stun:stun.l.google.com:19302"} ]
 };
 
+var peerConnection;  // This is our WebRTC connection
 peerConnection = new RTCPeerConnection(servers);
 peerConnection.ondatachannel = handleDataChannel;
 
-dataChannel = peerConnection.createDataChannel('myDataChannel');
+var dataChannel = peerConnection.createDataChannel('myDataChannel');
 dataChannel.onopen = handleDataChannelOpen;
 
 // Enable sending of ICE candidates to peer.
