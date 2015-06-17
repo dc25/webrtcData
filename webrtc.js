@@ -42,10 +42,14 @@ var handleAnnounceChannelMessage = function (snapshot) {
     if (message.id != id) {
         console.log('Discovered matching announcement from ' + message.id);
         remote = message.id;
-        peerConnection.createOffer(handleCreateSDPSuccess, handleCreateSDPError);
+        if (existingAnnouncementsLoaded) {
+            // this announcement arrived after page loaded
+            peerConnection.createOffer(handleCreateSDPSuccess, handleCreateSDPError);
+        }
     }
 };
-// Handle an incoming message on the announcement channel
+// This handler is called one time.
+// After existing children added but before new children added
 var handleAnnounceChannelValue = function (snapshot) {
     existingAnnouncementsLoaded = true;
 };
