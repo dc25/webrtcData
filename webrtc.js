@@ -35,6 +35,7 @@ var sendAnnounceChannelMessage = function () {
         console.log('Announced our ID is ' + id);
     });
 };
+var existingAnnouncementsLoaded = false;
 // Handle an incoming message on the announcement channel
 var handleAnnounceChannelMessage = function (snapshot) {
     var message = snapshot.val();
@@ -43,6 +44,10 @@ var handleAnnounceChannelMessage = function (snapshot) {
         remote = message.id;
         peerConnection.createOffer(handleCreateSDPSuccess, handleCreateSDPError);
     }
+};
+// Handle an incoming message on the announcement channel
+var handleAnnounceChannelValue = function (snapshot) {
+    existingAnnouncementsLoaded = true;
 };
 /* == Signal Channel Functions ==
  * The signal channels are used to delegate the WebRTC connection between
@@ -161,6 +166,7 @@ var firebaseUrl = 'https://pr100.firebaseio.com/';
 var database = new Firebase(firebaseUrl);
 var announceChannel = database.child(sharedKey);
 announceChannel.on('child_added', handleAnnounceChannelMessage);
+announceChannel.once('value', handleAnnounceChannelValue);
 var signalChannel = database.child('messages').child(id);
 signalChannel.on('child_added', handleSignalChannelMessage);
 // Use well known public servers for STUN/TURN

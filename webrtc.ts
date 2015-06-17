@@ -42,6 +42,8 @@ var sendAnnounceChannelMessage = function() {
   });
 };
 
+var existingAnnouncementsLoaded:boolean = false;
+
 // Handle an incoming message on the announcement channel
 var handleAnnounceChannelMessage = function(snapshot) {
   var message = snapshot.val();
@@ -50,6 +52,11 @@ var handleAnnounceChannelMessage = function(snapshot) {
     remote = message.id;
     peerConnection.createOffer(handleCreateSDPSuccess , handleCreateSDPError);
   }
+};
+
+// Handle an incoming message on the announcement channel
+var handleAnnounceChannelValue = function(snapshot) {
+    existingAnnouncementsLoaded = true;
 };
 
 /* == Signal Channel Functions ==
@@ -181,6 +188,7 @@ var database:Firebase = new Firebase(firebaseUrl);
 
 var announceChannel = database.child(sharedKey);
 announceChannel.on('child_added', handleAnnounceChannelMessage);
+announceChannel.once('value', handleAnnounceChannelValue);
 
 var signalChannel = database.child('messages').child(id);
 signalChannel.on('child_added', handleSignalChannelMessage);
