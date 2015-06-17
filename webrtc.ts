@@ -170,7 +170,7 @@ signalChannel.on('child_added', handleSignalChannelMessage);
 // Use well known public servers for STUN/TURN
 // STUN is a component of the actual WebRTC connection
 var servers = {
-iceServers: [ {url: "stun:23.21.150.121"}, {url: "stun:stun.l.google.com:19302"} ]
+  iceServers: [ {url: "stun:23.21.150.121"}, {url: "stun:stun.l.google.com:19302"} ]
 };
 
 var peerConnection;  // This is our WebRTC connection
