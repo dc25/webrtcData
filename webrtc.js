@@ -77,8 +77,6 @@ var handleSignalChannelMessage = function (snapshot) {
         if (signal.sdp.type == 'offer') {
             peerConnection.createAnswer(handleCreateSDPSuccess, handleCreateSDPError);
         }
-        else
-            console.log('Recieved a sdp signal that is neither offer nor answer');
     }
     else if (signal.ice) {
         peerConnection.addIceCandidate(new RTCIceCandidate(signal.ice));
