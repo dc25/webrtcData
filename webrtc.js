@@ -71,8 +71,7 @@ function handleCreateSDPSuccess(sessionDescription) {
 // This is the general handler for a message from our remote client
 // Determine what type of message it is, and call the appropriate handler
 var handleSignalChannelMessage = function (snapshot) {
-    var message = snapshot.val();
-    var signal = JSON.parse(message);
+    var signal = JSON.parse(snapshot.val());
     if (signal.sdp) {
         peerConnection.setRemoteDescription(new RTCSessionDescription(signal.sdp));
         if (signal.sdp.type == 'offer') {
