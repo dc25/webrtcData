@@ -18,21 +18,6 @@ var sharedKey = prompt("Please enter a shared identifier");
 var remote; // ID of the remote peer -- set once they send an offer
 var peerConnection; // This is our WebRTC connection
 var dataChannel; // This is our outgoing data channel within WebRTC
-// Function to initiate the WebRTC peerconnection and dataChannel
-var initiateWebRTCState = function () {
-    // Use well known public servers for STUN/TURN
-    // STUN is a component of the actual WebRTC connection
-    var servers = {
-        iceServers: [{ url: "stun:23.21.150.121" }, { url: "stun:stun.l.google.com:19302" }]
-    };
-    peerConnection = new RTCPeerConnection(servers);
-    peerConnection.ondatachannel = handleDataChannel;
-    dataChannel = peerConnection.createDataChannel('myDataChannel');
-    dataChannel.onopen = handleDataChannelOpen;
-    // Enable sending of ICE candidates to peer.
-    peerConnection.onicecandidate = handleICECandidate;
-    peerConnection.oniceconnectionstatechange = handleICEConnectionStateChange;
-};
 /* == Announcement Channel Functions ==
  * The 'announcement channel' allows clients to find each other on Firebase
  * These functions are for communicating through the announcement channel
@@ -43,8 +28,6 @@ var initiateWebRTCState = function () {
  */
 // Announce our arrival to the announcement channel
 var sendAnnounceChannelMessage = function () {
-    var announceChannel = database.child(sharedKey);
-    announceChannel.on('child_added', handleAnnounceChannelMessage);
     announceChannel.remove(function () {
         announceChannel.push({
             id: id
@@ -176,9 +159,22 @@ var handleDataChannelOpen = function () {
 // You probably want to replace the text below with your own Firebase URL
 var firebaseUrl = 'https://pr100.firebaseio.com/';
 var database = new Firebase(firebaseUrl);
+var announceChannel = database.child(sharedKey);
+announceChannel.on('child_added', handleAnnounceChannelMessage);
 var signalChannel = database.child('messages').child(id);
 signalChannel.on('child_added', handleSignalChannelMessage);
-initiateWebRTCState();
+// Use well known public servers for STUN/TURN
+// STUN is a component of the actual WebRTC connection
+var servers = {
+    iceServers: [{ url: "stun:23.21.150.121" }, { url: "stun:stun.l.google.com:19302" }]
+};
+peerConnection = new RTCPeerConnection(servers);
+peerConnection.ondatachannel = handleDataChannel;
+dataChannel = peerConnection.createDataChannel('myDataChannel');
+dataChannel.onopen = handleDataChannelOpen;
+// Enable sending of ICE candidates to peer.
+peerConnection.onicecandidate = handleICECandidate;
+peerConnection.oniceconnectionstatechange = handleICEConnectionStateChange;
 // Send a message to the announcement channel
 // If our partner is already waiting, they will send us a WebRTC offer
 // over our Firebase signalling channel and we can begin delegating WebRTC
