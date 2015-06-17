@@ -102,12 +102,7 @@ var handleAnswerSignal = function(message) {
 
 // Handle an ICE candidate notification from the remote client
 var handleCandidateSignal = function(message) {
-  if (typeof peerConnection !== 'undefined') {
-      var candidate = new RTCIceCandidate(message);
-      peerConnection.addIceCandidate(candidate);
-  } else {
-    console.log('UNDEFINED PEER CONNECTION');
-  }
+  peerConnection.addIceCandidate(new RTCIceCandidate(message));
 };
 
 // This is the general handler for a message from our remote client
