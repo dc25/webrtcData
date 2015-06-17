@@ -82,10 +82,7 @@ function handleCreateSDPError(error) {
 
 function handleCreateSDPSuccess(sessionDescription) {
     peerConnection.setLocalDescription(sessionDescription);
-    sendSignalChannelMessage({ 
-        type: sessionDescription.type,
-        sdp: sessionDescription.sdp 
-    });
+    sendSignalChannelMessage(JSON.stringify({'sdp': sessionDescription}));
 }
 
 // Handle a WebRTC offer request from a remote client
@@ -109,11 +106,19 @@ var handleCandidateSignal = function(message) {
 // Determine what type of message it is, and call the appropriate handler
 var handleSignalChannelMessage = function(snapshot) {
   var message = snapshot.val();
-  var type = message.type;
-  console.log('Recieved a \'' + type + '\' signal');
-  if (type == 'offer') handleOfferSignal(message);
-  else if (type == 'answer') handleAnswerSignal(message);
-  else if (type == 'candidate') handleCandidateSignal(message);
+
+  var signal = JSON.parse(message);
+  if(signal.sdp) {
+    if (signal.sdp.type == 'offer') 
+      handleOfferSignal(signal.sdp);
+    else if (signal.sdp.type == 'answer') 
+      handleAnswerSignal(signal.sdp);
+    else 
+        console.log('Recieved a sdp signal that is neither offer nor answer');
+  } else if(signal.ice) {
+    handleCandidateSignal(signal.ice);
+  } else 
+    console.log('Recieved a signal that is neither sdp nor ice');
 };
 
 /* == ICE Candidate Functions ==
@@ -136,12 +141,8 @@ var handleICEConnectionStateChange = function() {
 var handleICECandidate = function(event) {
   var candidate = event.candidate;
   if (candidate) {
-    candidate.type = 'candidate';
     console.log('Sending candidate to ' + remote);
-    sendSignalChannelMessage({ 
-        type: candidate.type,
-        candidate: candidate.candidate,
-        sdpMLineIndex: candidate.sdpMLineIndex });
+    sendSignalChannelMessage(JSON.stringify({'ice': candidate}));
   } else {
     console.log('All candidates sent');
   }
