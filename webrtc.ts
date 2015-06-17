@@ -34,12 +34,10 @@ var dataChannel;     // This is our outgoing data channel within WebRTC
 
 // Announce our arrival to the announcement channel
 var sendAnnounceChannelMessage = function() {
-  announceChannel.remove(function() {
     announceChannel.push({
       id : id
     });
     console.log('Announced our ID is ' + id);
-  });
 };
 
 var existingAnnouncementsLoaded:boolean = false;
