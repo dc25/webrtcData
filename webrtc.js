@@ -68,6 +68,12 @@ function handleCreateSDPSuccess(sessionDescription) {
     peerConnection.setLocalDescription(sessionDescription);
     sendSignalChannelMessage(JSON.stringify({ 'sdp': sessionDescription }));
 }
+function addIceCandidateErrorCallback(errorInformation) {
+    console.log('peerConnection.addIceCandidate() error: ', DOMError);
+}
+function addIceCandidateSuccessCallback() {
+    console.log('peerConnection.addIceCandidate() success.');
+}
 // This is the general handler for a message from our remote client
 // Determine what type of message it is, and call the appropriate handler
 var handleSignalChannelMessage = function (snapshot) {
@@ -79,7 +85,7 @@ var handleSignalChannelMessage = function (snapshot) {
         }
     }
     else if (signal.ice) {
-        peerConnection.addIceCandidate(new RTCIceCandidate(signal.ice));
+        peerConnection.addIceCandidate(new RTCIceCandidate(signal.ice), addIceCandidateSuccessCallback, addIceCandidateErrorCallback);
     }
     else
         console.log('Recieved a signal that is neither sdp nor ice');
@@ -147,8 +153,7 @@ signalChannel.on('child_added', handleSignalChannelMessage);
 var servers = {
     iceServers: [{ url: "stun:23.21.150.121" }, { url: "stun:stun.l.google.com:19302" }]
 };
-var peerConnection; // This is our WebRTC connection
-peerConnection = new RTCPeerConnection(servers);
+var peerConnection = new RTCPeerConnection(servers);
 peerConnection.ondatachannel = handleDataChannel;
 var dataChannel = peerConnection.createDataChannel('myDataChannel');
 dataChannel.onopen = handleDataChannelOpen;
