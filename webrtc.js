@@ -61,7 +61,6 @@ var handleAnnounceChannelValue = function (snapshot) {
  */
 // Send a message to the remote client via Firebase
 var sendSignalChannelMessage = function (message) {
-    message.sender = id;
     database.child('messages').child(remote).push(message);
 };
 function handleCreateSDPError(error) {
@@ -76,7 +75,6 @@ function handleCreateSDPSuccess(sessionDescription) {
 }
 // Handle a WebRTC offer request from a remote client
 var handleOfferSignal = function (message) {
-    remote = message.sender;
     peerConnection.setRemoteDescription(new RTCSessionDescription(message));
     peerConnection.createAnswer(handleCreateSDPSuccess, handleCreateSDPError);
 };
@@ -98,9 +96,8 @@ var handleCandidateSignal = function (message) {
 // Determine what type of message it is, and call the appropriate handler
 var handleSignalChannelMessage = function (snapshot) {
     var message = snapshot.val();
-    var sender = message.sender;
     var type = message.type;
-    console.log('Recieved a \'' + type + '\' signal from ' + sender);
+    console.log('Recieved a \'' + type + '\' signal');
     if (type == 'offer')
         handleOfferSignal(message);
     else if (type == 'answer')
