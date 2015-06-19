@@ -20,24 +20,24 @@ var DataConnection = (function () {
         this.peerConnection.oniceconnectionstatechange = function () {
             _this.handleICEConnectionStateChange();
         };
-        this.dataChannel = this.peerConnection.createDataChannel('myDataChannel');
+        this.dataChannel = this.peerConnection.createDataChannel("myDataChannel");
         this.dataChannel.onopen = function () {
             _this.handleDataChannelOpen();
         };
         // Choose a random id
-        this.id = Math.random().toString().replace('.', '');
+        this.id = Math.random().toString().replace(".", "");
         // Configure, connect, and set up Firebase
         // You probably want to replace the text below with your own Firebase URL
-        this.database = new Firebase('https://pr100.firebaseio.com/');
+        this.database = new Firebase("https://pr100.firebaseio.com/");
         this.announceChannel = this.database.child(sharedKey);
-        this.announceChannel.on('child_added', function (snapshot) {
+        this.announceChannel.on("child_added", function (snapshot) {
             _this.handleAnnounceChannelMessage(snapshot);
         });
-        this.announceChannel.once('value', function (snapshot) {
+        this.announceChannel.once("value", function (snapshot) {
             _this.handleAnnounceChannelValue(snapshot);
         });
-        var signalChannel = this.database.child('messages').child(this.id);
-        signalChannel.on('child_added', function (snapshot) {
+        var signalChannel = this.database.child("messages").child(this.id);
+        signalChannel.on("child_added", function (snapshot) {
             _this.handleSignalChannelMessage(snapshot);
         });
         // Send a message to the announcement channel
@@ -46,7 +46,7 @@ var DataConnection = (function () {
         this.sendAnnounceChannelMessage();
     }
     /* == Announcement Channel Functions ==
-     * The 'announcement channel' allows clients to find each other on Firebase
+     * The "announcement channel" allows clients to find each other on Firebase
      * These functions are for communicating through the announcement channel
      * This is part of the signalling server mechanism
      *
@@ -58,10 +58,10 @@ var DataConnection = (function () {
         this.announceChannel.push({
             id: this.id
         });
-        console.log('Announced our ID is ' + this.id);
+        console.log("Announced our ID is " + this.id);
     };
     DataConnection.prototype.handleCreateSDPError = function (error) {
-        console.log('handleCreateSDPError() error: ', error);
+        console.log("handleCreateSDPError() error: ", error);
     };
     DataConnection.prototype.handleCreateSDPSuccess = function (sessionDescription) {
         this.peerConnection.setLocalDescription(sessionDescription);
@@ -71,8 +71,8 @@ var DataConnection = (function () {
     DataConnection.prototype.handleAnnounceChannelMessage = function (snapshot) {
         var _this = this;
         var message = snapshot.val();
-        if (message.id != this.id) {
-            console.log('Discovered matching announcement from ' + message.id);
+        if (message.id !== this.id) {
+            console.log("Discovered matching announcement from " + message.id);
             this.remoteId = message.id;
             if (this.existingAnnouncementsLoaded) {
                 // this announcement arrived after page loaded
@@ -94,12 +94,12 @@ var DataConnection = (function () {
      * two peers once they have found each other via the announcement channel.
      *
      * This is done on Firebase as well. Once the two peers communicate the
-     * necessary information to 'find' each other via WebRTC, the signalling
+     * necessary information to "find" each other via WebRTC, the signalling
      * channel is no longer used and the connection becomes peer-to-peer.
      */
     // Send a message to the remote client via Firebase
     DataConnection.prototype.sendSignalChannelMessage = function (message) {
-        this.database.child('messages').child(this.remoteId).push(message);
+        this.database.child("messages").child(this.remoteId).push(message);
     };
     // This is the general handler for a message from our remote client
     // Determine what type of message it is, and call the appropriate handler
@@ -108,7 +108,7 @@ var DataConnection = (function () {
         var message = JSON.parse(snapshot.val());
         if (message.type) {
             this.peerConnection.setRemoteDescription(new RTCSessionDescription(message));
-            if (message.type == 'offer') {
+            if (message.type === "offer") {
                 this.peerConnection.createAnswer(function (sd) {
                     _this.handleCreateSDPSuccess(sd);
                 }, function (err) {
@@ -118,14 +118,15 @@ var DataConnection = (function () {
         }
         else if (message.candidate) {
             this.peerConnection.addIceCandidate(new RTCIceCandidate(message), function () {
-                console.log('peerConnection.addIceCandidate() success.');
+                console.log("peerConnection.addIceCandidate() success.");
             }, function (errorInformation) {
-                console.log('peerConnection.addIceCandidate() error: ', DOMError);
+                console.log("peerConnection.addIceCandidate() error: ", DOMError);
             } // error handler
             );
         }
-        else
-            console.log('Recieved a signal that is neither session description nor ice candidate');
+        else {
+            console.log("Recieved a signal that is neither session description nor ice candidate");
+        }
     };
     /* == ICE Candidate Functions ==
      * ICE candidates are what will connect the two peers
@@ -135,8 +136,8 @@ var DataConnection = (function () {
     // This is how we determine when the WebRTC connection has ended
     // This is most likely because the other peer left the page
     DataConnection.prototype.handleICEConnectionStateChange = function () {
-        if (this.peerConnection.iceConnectionState == 'disconnected') {
-            console.log('Client disconnected!');
+        if (this.peerConnection.iceConnectionState === "disconnected") {
+            console.log("Client disconnected!");
             this.sendAnnounceChannelMessage();
         }
     };
@@ -145,11 +146,11 @@ var DataConnection = (function () {
     DataConnection.prototype.handleICECandidate = function (event) {
         var candidate = event.candidate;
         if (candidate) {
-            console.log('Sending candidate to ' + this.remoteId);
+            console.log("Sending candidate to " + this.remoteId);
             this.sendSignalChannelMessage(JSON.stringify(candidate));
         }
         else {
-            console.log('All candidates sent');
+            console.log("All candidates sent");
         }
     };
     /* == Data Channel Functions ==
@@ -171,13 +172,13 @@ var DataConnection = (function () {
     // This is called on an incoming message from our peer
     // You probably want to overwrite this to do something more useful!
     DataConnection.prototype.handleDataChannelMessage = function (event) {
-        console.log('Recieved Message: ' + event.data);
+        console.log("Recieved Message: " + event.data);
         document.getElementById("message").innerHTML = event.data;
     };
-    // This is called when the WebRTC sending data channel is offically 'open'
+    // This is called when the WebRTC sending data channel is offically "open"
     DataConnection.prototype.handleDataChannelOpen = function () {
-        console.log('Data channel created!');
-        this.dataChannel.send('Hello! I am ' + this.id);
+        console.log("Data channel created!");
+        this.dataChannel.send("Hello! I am " + this.id);
     };
     return DataConnection;
 })();
