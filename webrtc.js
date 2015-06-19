@@ -65,7 +65,7 @@ var DataConnection = (function () {
     };
     DataConnection.prototype.handleCreateSDPSuccess = function (sessionDescription) {
         this.peerConnection.setLocalDescription(sessionDescription);
-        this.sendSignalChannelMessage(JSON.stringify({ 'sdp': sessionDescription }));
+        this.sendSignalChannelMessage(JSON.stringify(sessionDescription));
     };
     // Handle an incoming message on the announcement channel
     DataConnection.prototype.handleAnnounceChannelMessage = function (snapshot) {
@@ -111,10 +111,10 @@ var DataConnection = (function () {
     // Determine what type of message it is, and call the appropriate handler
     DataConnection.prototype.handleSignalChannelMessage = function (snapshot) {
         var _this = this;
-        var signal = JSON.parse(snapshot.val());
-        if (signal.sdp) {
-            this.peerConnection.setRemoteDescription(new RTCSessionDescription(signal.sdp));
-            if (signal.sdp.type == 'offer') {
+        var message = JSON.parse(snapshot.val());
+        if (message.type) {
+            this.peerConnection.setRemoteDescription(new RTCSessionDescription(message));
+            if (message.type == 'offer') {
                 this.peerConnection.createAnswer(function (sd) {
                     _this.handleCreateSDPSuccess(sd);
                 }, function (err) {
@@ -122,11 +122,11 @@ var DataConnection = (function () {
                 });
             }
         }
-        else if (signal.ice) {
-            this.peerConnection.addIceCandidate(new RTCIceCandidate(signal.ice), this.addIceCandidateSuccessCallback, this.addIceCandidateErrorCallback);
+        else if (message.candidate) {
+            this.peerConnection.addIceCandidate(new RTCIceCandidate(message), this.addIceCandidateSuccessCallback, this.addIceCandidateErrorCallback);
         }
         else
-            console.log('Recieved a signal that is neither sdp nor ice');
+            console.log('Recieved a signal that is neither session description nor ice candidate');
     };
     /* == ICE Candidate Functions ==
      * ICE candidates are what will connect the two peers
@@ -147,7 +147,7 @@ var DataConnection = (function () {
         var candidate = event.candidate;
         if (candidate) {
             console.log('Sending candidate to ' + this.remoteId);
-            this.sendSignalChannelMessage(JSON.stringify({ 'ice': candidate }));
+            this.sendSignalChannelMessage(JSON.stringify(candidate));
         }
         else {
             console.log('All candidates sent');

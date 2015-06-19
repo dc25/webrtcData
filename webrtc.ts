@@ -19,7 +19,6 @@ class DataConnection {
     private peerConnection:RTCPeerConnection;
     private dataChannel:RTCDataChannel;
 
-
     /* == Announcement Channel Functions ==
      * The 'announcement channel' allows clients to find each other on Firebase
      * These functions are for communicating through the announcement channel
@@ -45,7 +44,7 @@ class DataConnection {
 
     private handleCreateSDPSuccess(sessionDescription) {
         this.peerConnection.setLocalDescription(sessionDescription);
-        this.sendSignalChannelMessage(JSON.stringify({'sdp': sessionDescription}));
+        this.sendSignalChannelMessage(JSON.stringify(sessionDescription));
     }
 
     // Handle an incoming message on the announcement channel
@@ -95,18 +94,18 @@ class DataConnection {
     // This is the general handler for a message from our remote client
     // Determine what type of message it is, and call the appropriate handler
     private handleSignalChannelMessage(snapshot) {
-      var signal = JSON.parse(snapshot.val());
-      if(signal.sdp) {
-        this.peerConnection.setRemoteDescription(new RTCSessionDescription(signal.sdp));
-        if (signal.sdp.type == 'offer') {
+      var message = JSON.parse(snapshot.val());
+      if(message.type) {
+        this.peerConnection.setRemoteDescription(new RTCSessionDescription(message));
+        if (message.type == 'offer') {
           this.peerConnection.createAnswer((sd) => {this.handleCreateSDPSuccess(sd);} , (err) => {this.handleCreateSDPError(err);});
         }
-      } else if(signal.ice) {
-        this.peerConnection.addIceCandidate(new RTCIceCandidate(signal.ice),
+      } else if(message.candidate) {
+        this.peerConnection.addIceCandidate(new RTCIceCandidate(message),
                                        this.addIceCandidateSuccessCallback,
                                        this.addIceCandidateErrorCallback);
       } else 
-        console.log('Recieved a signal that is neither sdp nor ice');
+        console.log('Recieved a signal that is neither session description nor ice candidate');
     }
 
     /* == ICE Candidate Functions ==
@@ -130,7 +129,7 @@ class DataConnection {
       var candidate = event.candidate;
       if (candidate) {
         console.log('Sending candidate to ' + this.remoteId);
-        this.sendSignalChannelMessage(JSON.stringify({'ice': candidate}));
+        this.sendSignalChannelMessage(JSON.stringify(candidate));
       } else {
         console.log('All candidates sent');
       }
