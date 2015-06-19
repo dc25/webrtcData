@@ -18,6 +18,7 @@ class DataConnection {
     private announceChannel:Firebase;
     private peerConnection:RTCPeerConnection;
     private dataChannel:RTCDataChannel;
+    private existingAnnouncementsLoaded:boolean = false;
 
     /* == Announcement Channel Functions ==
      * The 'announcement channel' allows clients to find each other on Firebase
@@ -35,8 +36,6 @@ class DataConnection {
         });
         console.log('Announced our ID is ' + this.id);
     }
-
-    private existingAnnouncementsLoaded:boolean = false;
 
     private handleCreateSDPError(error) {
       console.log('handleCreateSDPError() error: ', error);
