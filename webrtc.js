@@ -101,12 +101,6 @@ var DataConnection = (function () {
     DataConnection.prototype.sendSignalChannelMessage = function (message) {
         this.database.child('messages').child(this.remoteId).push(message);
     };
-    DataConnection.prototype.addIceCandidateErrorCallback = function (errorInformation) {
-        console.log('peerConnection.addIceCandidate() error: ', DOMError);
-    };
-    DataConnection.prototype.addIceCandidateSuccessCallback = function () {
-        console.log('peerConnection.addIceCandidate() success.');
-    };
     // This is the general handler for a message from our remote client
     // Determine what type of message it is, and call the appropriate handler
     DataConnection.prototype.handleSignalChannelMessage = function (snapshot) {
@@ -123,7 +117,12 @@ var DataConnection = (function () {
             }
         }
         else if (message.candidate) {
-            this.peerConnection.addIceCandidate(new RTCIceCandidate(message), this.addIceCandidateSuccessCallback, this.addIceCandidateErrorCallback);
+            this.peerConnection.addIceCandidate(new RTCIceCandidate(message), function () {
+                console.log('peerConnection.addIceCandidate() success.');
+            }, function (errorInformation) {
+                console.log('peerConnection.addIceCandidate() error: ', DOMError);
+            } // error handler
+            );
         }
         else
             console.log('Recieved a signal that is neither session description nor ice candidate');

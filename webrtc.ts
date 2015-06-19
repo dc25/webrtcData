@@ -81,16 +81,6 @@ class DataConnection {
       this.database.child('messages').child(this.remoteId).push(message);
     }
 
-    private addIceCandidateErrorCallback(errorInformation: DOMError): void
-    {
-      console.log('peerConnection.addIceCandidate() error: ', DOMError);
-    }
-
-    private  addIceCandidateSuccessCallback() : void
-    {
-      console.log('peerConnection.addIceCandidate() success.');
-    }
-
     // This is the general handler for a message from our remote client
     // Determine what type of message it is, and call the appropriate handler
     private handleSignalChannelMessage(snapshot) {
@@ -101,9 +91,10 @@ class DataConnection {
           this.peerConnection.createAnswer((sd) => {this.handleCreateSDPSuccess(sd);} , (err) => {this.handleCreateSDPError(err);});
         }
       } else if(message.candidate) {
-        this.peerConnection.addIceCandidate(new RTCIceCandidate(message),
-                                       this.addIceCandidateSuccessCallback,
-                                       this.addIceCandidateErrorCallback);
+        this.peerConnection.addIceCandidate( new RTCIceCandidate(message),
+            () => { console.log('peerConnection.addIceCandidate() success.'); },  // success handler
+            (errorInformation: DOMError) => { console.log('peerConnection.addIceCandidate() error: ', DOMError); } // error handler
+        );
       } else 
         console.log('Recieved a signal that is neither session description nor ice candidate');
     }
