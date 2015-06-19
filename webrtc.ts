@@ -30,26 +30,26 @@ class DataConnection {
      */
 
     // Announce our arrival to the announcement channel
-    private sendAnnounceChannelMessage = function() {
+    private sendAnnounceChannelMessage() {
         this.announceChannel.push({
           id : this.id
         });
         console.log('Announced our ID is ' + this.id);
-    };
+    }
 
     private existingAnnouncementsLoaded:boolean = false;
 
-    private handleCreateSDPError = function(error) {
+    private handleCreateSDPError(error) {
       console.log('handleCreateSDPError() error: ', error);
     }
 
-    private handleCreateSDPSuccess = function(sessionDescription) {
+    private handleCreateSDPSuccess(sessionDescription) {
         this.peerConnection.setLocalDescription(sessionDescription);
         this.sendSignalChannelMessage(JSON.stringify({'sdp': sessionDescription}));
     }
 
     // Handle an incoming message on the announcement channel
-    private handleAnnounceChannelMessage = function(snapshot) { 
+    private handleAnnounceChannelMessage(snapshot) { 
       var message = snapshot.val();
       if (message.id != this.id) {
         console.log('Discovered matching announcement from ' + message.id);
@@ -64,9 +64,9 @@ class DataConnection {
 
     // This handler is called one time.
     // After existing children added but before new children added
-    private handleAnnounceChannelValue = function(snapshot) {
+    private handleAnnounceChannelValue(snapshot) {
         this.existingAnnouncementsLoaded = true;
-    };
+    }
 
     /* == Signal Channel Functions ==
      * The signal channels are used to delegate the WebRTC connection between 
@@ -78,23 +78,23 @@ class DataConnection {
      */
 
     // Send a message to the remote client via Firebase
-    private sendSignalChannelMessage = function(message) {
+    private sendSignalChannelMessage(message) {
       this.database.child('messages').child(this.remoteId).push(message);
-    };
+    }
 
-    private addIceCandidateErrorCallback = function(errorInformation: DOMError): void
+    private addIceCandidateErrorCallback(errorInformation: DOMError): void
     {
       console.log('peerConnection.addIceCandidate() error: ', DOMError);
     }
 
-    private  addIceCandidateSuccessCallback = function() : void
+    private  addIceCandidateSuccessCallback() : void
     {
       console.log('peerConnection.addIceCandidate() success.');
     }
 
     // This is the general handler for a message from our remote client
     // Determine what type of message it is, and call the appropriate handler
-    private handleSignalChannelMessage = function(snapshot) {
+    private handleSignalChannelMessage(snapshot) {
       var signal = JSON.parse(snapshot.val());
       if(signal.sdp) {
         this.peerConnection.setRemoteDescription(new RTCSessionDescription(signal.sdp));
@@ -107,7 +107,7 @@ class DataConnection {
                                        this.addIceCandidateErrorCallback);
       } else 
         console.log('Recieved a signal that is neither sdp nor ice');
-    };
+    }
 
     /* == ICE Candidate Functions ==
      * ICE candidates are what will connect the two peers
@@ -117,16 +117,16 @@ class DataConnection {
 
     // This is how we determine when the WebRTC connection has ended
     // This is most likely because the other peer left the page
-    private handleICEConnectionStateChange = function() {
+    private handleICEConnectionStateChange() {
       if (this.peerConnection.iceConnectionState == 'disconnected') {
         console.log('Client disconnected!');
         this.sendAnnounceChannelMessage();
       }
-    };
+    }
 
     // Handle ICE Candidate events by sending them to our remote
     // Send the ICE Candidates via the signal channel
-    private handleICECandidate = function(event) {
+    private handleICECandidate(event) {
       var candidate = event.candidate;
       if (candidate) {
         console.log('Sending candidate to ' + this.remoteId);
@@ -134,7 +134,7 @@ class DataConnection {
       } else {
         console.log('All candidates sent');
       }
-    };
+    }
 
     /* == Data Channel Functions ==
      * The WebRTC connection is established by the time these functions run
@@ -147,22 +147,22 @@ class DataConnection {
     // This is our receiving data channel event
     // We receive this channel when our peer opens a sending channel
     // We will bind to trigger a handler when an incoming message happens
-    private handleDataChannel = function(event) {
+    private handleDataChannel(event) {
       event.channel.onmessage = (e) => {this.handleDataChannelMessage(e);};
-    };
+    }
 
     // This is called on an incoming message from our peer
     // You probably want to overwrite this to do something more useful!
-    private handleDataChannelMessage = function(event) {
+    private handleDataChannelMessage(event) {
       console.log('Recieved Message: ' + event.data);
       document.getElementById("message").innerHTML = event.data;
-    };
+    }
 
     // This is called when the WebRTC sending data channel is offically 'open'
-    private handleDataChannelOpen = function() {
+    private handleDataChannelOpen() {
       console.log('Data channel created!');
       this.dataChannel.send('Hello! I am ' + this.id);
-    };
+    }
 
     constructor(sharedKey:string) {
         // Use well known public servers for STUN/TURN
