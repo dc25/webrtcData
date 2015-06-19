@@ -1,5 +1,5 @@
 COMMON_SOURCES = 
-TYPESCRIPT_SOURCES = webrtc.ts
+TYPESCRIPT_SOURCES = webrtc.ts doConnect.ts
 
 JAVASCRIPT_FROM_TYPESCRIPT = $(patsubst %.ts,%.js, $(TYPESCRIPT_SOURCES))
 
