@@ -5,6 +5,7 @@ var dc;
 // You probably want to overwrite this to do something more useful!
 function handleMessage(event) {
     console.log("Recieved Message: " + event.data);
+    document.getElementById("message").innerHTML = event.data;
 }
 inputElement.onkeydown = function (e) {
     if (e.keyCode == 13) {
