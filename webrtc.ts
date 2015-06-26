@@ -141,14 +141,7 @@ class DataConnection {
     // We receive this channel when our peer opens a sending channel
     // We will bind to trigger a handler when an incoming message happens
     private handleDataChannel(event) {
-      event.channel.onmessage = (e) => {this.handleDataChannelMessage(e); };
-    }
-
-    // This is called on an incoming message from our peer
-    // You probably want to overwrite this to do something more useful!
-    private handleDataChannelMessage(event) {
-      console.log("Recieved Message: " + event.data);
-      document.getElementById("message").innerHTML = event.data;
+        event.channel.onmessage = (e) => {this.handleDataChannelMessage(e); };
     }
 
     // This is called when the WebRTC sending data channel is offically "open"
@@ -157,7 +150,7 @@ class DataConnection {
       this.dataChannel.send("Hello! I am " + this.id);
     }
 
-    constructor(sharedKey: string) {
+    constructor(sharedKey: string, private handleDataChannelMessage: (event: RTCMessageEvent) => void) {
         // Use well known public servers for STUN/TURN
         // STUN is a component of the actual WebRTC connection
 

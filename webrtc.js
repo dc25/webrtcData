@@ -1,10 +1,11 @@
 /// <reference path="DefinitelyTyped/firebase/firebase.d.ts" />
 /// <reference path="DefinitelyTyped/webrtc/RTCPeerConnection.d.ts" />
 var DataConnection = (function () {
-    function DataConnection(sharedKey) {
+    function DataConnection(sharedKey, handleDataChannelMessage) {
         // Use well known public servers for STUN/TURN
         // STUN is a component of the actual WebRTC connection
         var _this = this;
+        this.handleDataChannelMessage = handleDataChannelMessage;
         this.existingAnnouncementsLoaded = false;
         var servers = {
             iceServers: [{ url: "stun:23.21.150.121" }, { url: "stun:stun.l.google.com:19302" }]
@@ -168,12 +169,6 @@ var DataConnection = (function () {
         event.channel.onmessage = function (e) {
             _this.handleDataChannelMessage(e);
         };
-    };
-    // This is called on an incoming message from our peer
-    // You probably want to overwrite this to do something more useful!
-    DataConnection.prototype.handleDataChannelMessage = function (event) {
-        console.log("Recieved Message: " + event.data);
-        document.getElementById("message").innerHTML = event.data;
     };
     // This is called when the WebRTC sending data channel is offically "open"
     DataConnection.prototype.handleDataChannelOpen = function () {
