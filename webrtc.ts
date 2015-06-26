@@ -150,6 +150,10 @@ class DataConnection {
       this.dataChannel.send("Hello! I am " + this.id);
     }
 
+    public send(s:string) {
+      this.dataChannel.send(s);
+    }
+
     constructor(sharedKey: string, private handleDataChannelMessage: (event: RTCMessageEvent) => void) {
         // Use well known public servers for STUN/TURN
         // STUN is a component of the actual WebRTC connection

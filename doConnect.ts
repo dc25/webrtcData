@@ -1,19 +1,25 @@
 /// <reference path="webrtc.d.ts" />
 
-var inputElement = document.getElementsByTagName('input')[0];
+var sharedKeyElement = <HTMLInputElement>document.getElementById('sharedKey');
+var chatInputElement = <HTMLInputElement>document.getElementById('chatInput');
 var dc:DataConnection;
 
 // This is called on an incoming message from our peer
 // You probably want to overwrite this to do something more useful!
 function handleMessage(event) {
     console.log("Recieved Message: " + event.data);
-    document.getElementById("message").innerHTML = event.data;
+    var chatLog = <HTMLInputElement>document.getElementById("transcript");
+    chatLog.value = chatLog.value + event.data;
 }
 
-inputElement.onkeydown = function( e ) {
+sharedKeyElement.onkeydown = function( e ) {
     if (e.keyCode == 13) {
-        dc = new DataConnection(inputElement.value, handleMessage);
+        dc = new DataConnection(sharedKeyElement.value, handleMessage);
     }
 }
 
-
+chatInputElement.onkeydown = function( e ) {
+    if (e.keyCode == 13) {
+        dc.send(chatInputElement.value);
+    }
+}

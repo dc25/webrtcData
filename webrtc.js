@@ -175,5 +175,8 @@ var DataConnection = (function () {
         console.log("Data channel created!");
         this.dataChannel.send("Hello! I am " + this.id);
     };
+    DataConnection.prototype.send = function (s) {
+        this.dataChannel.send(s);
+    };
     return DataConnection;
 })();
